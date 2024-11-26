@@ -23,7 +23,7 @@ Este é um projeto Django com integração ao PostgreSQL para gerenciamento de a
 
 Este projeto foi desenvolvido para gerenciar informações de "alvos". Ele é composto por:
 
-- Um **back-end** construído com **Django** e exposto via uma API RESTful com o **Django REST Framework**.
+- Um **back-end** construído com **Django** e exposto via uma API com operações de CRUD.
 - O **banco de dados PostgreSQL** roda em um container Docker, permitindo fácil escalabilidade e portabilidade.
 - O projeto inclui um painel de administração Django para gerenciamento de alvos e usuários.
 
