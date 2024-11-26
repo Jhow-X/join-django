@@ -19,5 +19,10 @@ COPY req.txt /usr/src/app/
 # Instalar as dependências do arquivo de requisitos
 RUN pip install --no-cache-dir -r req.txt
 
+COPY start-project.sh /usr/src/app/start-project.sh
+RUN chmod +x /usr/src/app/start-project.sh
+
 # Copiar o restante do código para dentro do contêiner
 COPY . /usr/src/app/
+
+CMD ["./start-project.sh"]

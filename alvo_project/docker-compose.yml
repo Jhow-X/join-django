@@ -4,7 +4,7 @@ services:
   django:
     build: .
     container_name: django
-    command: python manage.py runserver 0.0.0.0:8000
+    command: /bin/bash -c "/usr/src/app/start-project.sh"
     volumes:
       - .:/usr/src/app
     ports:
