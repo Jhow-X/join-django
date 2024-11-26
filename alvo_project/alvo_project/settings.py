@@ -25,18 +25,7 @@ SECRET_KEY = 'django-insecure-23^r)c=iwh$s3m@&=)i_p_fmbobmgk3342)s+^00_9g4sqz-u%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'nome_do_banco',
-        'USER': 'usuario',
-        'PASSWORD': 'senha',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -90,8 +79,12 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'alvos_db',
+        'USER': 'admin',
+        'PASSWORD': 'senha',
+        'HOST': 'db',  
+        'PORT': '5432', 
     }
 }
 
