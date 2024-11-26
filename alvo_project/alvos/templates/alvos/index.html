@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adicionar Alvos</title>
+    
+    <!-- Incluindo o Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- Seu estilo adicional aqui, se necessário -->
+    <style>
+        #map {
+            width: 100%;
+            height: 500px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Título -->
+<h1>Alvos no Mapa</h1>
+
+<!-- Botão para Incluir Novo Alvo -->
+<button type="button" class="btn btn-success" id="btn-novo-alvo">
+    Incluir Novo Alvo
+</button>
+
+<!-- O mapa onde os alvos serão exibidos -->
+<div id="map"></div>
+
+<!-- Modal para Adicionar ou Editar Alvo -->
+<div class="modal fade" id="modal-alvo" tabindex="-1" aria-labelledby="modal-alvoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-alvoLabel">Adicionar/Editar Alvo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-alvo">
+                    <div class="mb-3">
+                        <label for="id_nome" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="id_nome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_latitude" class="form-label">Latitude</label>
+                        <input type="number" step="any" class="form-control" id="id_latitude" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_longitude" class="form-label">Longitude</label>
+                        <input type="number" step="any" class="form-control" id="id_longitude" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_identificador" class="form-label">Identificador</label>
+                        <input type="text" class="form-control" id="id_identificador">
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_data_expiracao" class="form-label">Data de Expiração</label>
+                        <input type="date" class="form-control" id="id_data_expiracao">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btn-excluir" style="display: none;">Excluir</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Incluindo o JavaScript necessário -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+// Inicializa o mapa com uma posição inicial qualquer (ex: São Paulo)
+const map = L.map('map').setView([-23.55, -46.63], 13);
+
+// Adiciona a camada base do OpenStreetMap
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
+
+// Objeto para armazenar os marcadores com base no ID do alvo
+let markers = {};
+
+// Função para carregar os alvos existentes
+const carregarAlvos = async () => {
+    const response = await axios.get('/api/alvos/');
+    const alvos = response.data;
+
+    alvos.forEach(alvo => {
+        const marker = L.marker([alvo.latitude, alvo.longitude]).addTo(map);
+        
+        // Armazena o marcador no objeto markers usando o ID do alvo
+        markers[alvo.id] = marker;
+        
+        marker.on('click', () => abrirModal(alvo));
+    });
+};
+
+// Função para abrir a modal com os dados do alvo
+const abrirModal = (alvo) => {
+    document.getElementById('id_nome').value = alvo.nome;
+    document.getElementById('id_latitude').value = alvo.latitude;
+    document.getElementById('id_longitude').value = alvo.longitude;
+    document.getElementById('id_identificador').value = alvo.identificador;
+    document.getElementById('id_data_expiracao').value = alvo.data_expiracao;
+
+    // Exibe a modal
+    $('#modal-alvo').modal('show');
+    
+    // Exibe o botão de excluir para este alvo
+    document.getElementById('btn-excluir').style.display = 'inline-block';
+    document.getElementById('btn-excluir').onclick = function() {
+        excluirAlvo(alvo.id); // Passa o ID do alvo para exclusão
+        $('#modal-alvo').modal('hide'); // Fecha a modal
+    };
+};
+
+// Função para excluir um alvo
+const excluirAlvo = async (id) => {
+    try {
+        await axios.delete(`/api/alvos/${id}/`);
+        
+        // Remove o marcador do mapa
+        if (markers[id]) {
+            map.removeLayer(markers[id]); // Remove o marcador correspondente
+            delete markers[id]; // Remove do objeto de markers
+        }
+    } catch (error) {
+        console.error("Erro ao excluir o alvo", error);
+    }
+};
+
+// Evento para clicar no mapa e abrir a modal para adicionar um novo alvo
+map.on('click', function(e) {
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+
+    // Preenche a latitude e longitude na modal
+    document.getElementById('id_latitude').value = lat;
+    document.getElementById('id_longitude').value = lng;
+
+    // Limpa outros campos da modal (caso tenha preenchido antes)
+    document.getElementById('id_nome').value = '';
+    document.getElementById('id_identificador').value = '';
+    document.getElementById('id_data_expiracao').value = '';
+
+    // Exibe a modal
+    $('#modal-alvo').modal('show');
+    
+    // Esconde o botão de excluir ao adicionar um novo alvo
+    document.getElementById('btn-excluir').style.display = 'none';
+});
+
+// Evento para o botão "Incluir Novo Alvo"
+document.getElementById('btn-novo-alvo').addEventListener('click', function() {
+    // Limpa os campos da modal
+    document.getElementById('id_nome').value = '';
+    document.getElementById('id_latitude').value = '';
+    document.getElementById('id_longitude').value = '';
+    document.getElementById('id_identificador').value = '';
+    document.getElementById('id_data_expiracao').value = '';
+
+    // Exibe a modal
+    $('#modal-alvo').modal('show');
+    
+    // Esconde o botão de excluir ao adicionar um novo alvo
+    document.getElementById('btn-excluir').style.display = 'none';
+});
+
+// Envia os dados do alvo para a API para salvar ou editar
+document.getElementById('form-alvo').addEventListener('submit', async function(event) {
+    event.preventDefault();
+
+    // Obtém os valores do formulário
+    const nome = document.getElementById('id_nome').value;
+    const latitude = document.getElementById('id_latitude').value;
+    const longitude = document.getElementById('id_longitude').value;
+    const identificador = document.getElementById('id_identificador').value;
+    const dataExpiracao = document.getElementById('id_data_expiracao').value;
+
+    try {
+        // Envia uma requisição POST para adicionar o alvo
+        await axios.post('/api/alvos/', {
+            nome: nome,
+            latitude: latitude,
+            longitude: longitude,
+            identificador: identificador,
+            data_expiracao: dataExpiracao
+        });
+        // Fecha a modal e recarrega os alvos
+        $('#modal-alvo').modal('hide');
+        carregarAlvos(); // Recarrega os alvos
+    } catch (error) {
+        console.error("Erro ao adicionar alvo", error);
+    }
+});
+
+// Carregar os alvos ao carregar a página
+carregarAlvos();
+</script>
+
+</body>
+</html>
